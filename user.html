@@ -364,7 +364,7 @@ function caseTypeLabel(c) {
 const INDUSTRY_SYNONYMS = {
   '건설사': ['건설사', '건설회사', '건설업체'],
   '신탁사': ['신탁사', '신탁회사'],
-  '시공사': ['시공사', '시공자', '시공업체'],
+  '시공사': ['시공사', '시공자', '시공업체', '시공단'],
   '시행사': ['시행사', '시행자', '시행업체']
 };
 
@@ -409,12 +409,35 @@ function selectCases() {
     // 사건 관련 키워드용: 실적내용 + 쟁점 전체 텍스트에서 검색
     const fullText = (c.perf + ' ' + (c.sub || '')).toLowerCase();
 
-    // 의뢰인 업종 키워드용: "~를 대리하여" 앞부분(= 의뢰인을 지칭하는 구간)만 사용.
-    // 전체 문구에서 검색하면 "건설사를 대리하여 공공기관을 상대로..."처럼
-    // 상대방 업종까지 함께 걸려서 잘못 선별되는 문제가 있어, 의뢰인 구간으로 한정한다.
-    const repIdx = c.perf.indexOf('대리');
-    const clientSegment = repIdx === -1 ? c.perf : c.perf.slice(0, repIdx);
-    const clientText = (clientSegment + ' ' + (c.sub || '') + ' ' + (c.client || '')).toLowerCase();
+    // 의뢰인 업종 키워드용 텍스트 구성
+    // - 표에 '의뢰인 유형'이 기재된 경우: 그 값으로만 매칭 (실적문구 파싱은 사용하지 않음 →
+    //   문구 안에 상대방 업종이 함께 언급되어도 오매칭되지 않음)
+    // - '의뢰인 유형'이 공란인 경우: 기존처럼 실적문구에서 의뢰인 지칭 구간을 추출해 매칭
+    let clientText;
+    if (c.client && c.client.trim() !== '') {
+      clientText = (c.client + ' ' + (c.sub || '')).toLowerCase();
+    } else {
+      // "~를 대리하여" 앞부분(= 의뢰인을 지칭하는 구간)만 사용.
+      // 전체 문구에서 검색하면 "건설사를 대리하여 공공기관을 상대로..."처럼
+      // 상대방 업종까지 함께 걸려서 잘못 선별되는 문제가 있어, 의뢰인 구간으로 한정한다.
+      const repIdx = c.perf.indexOf('대리');
+      let clientSegment = repIdx === -1 ? c.perf : c.perf.slice(0, repIdx);
+      // "~사건에서", "~사안에서", "~소송에서"처럼 절 경계가 되는 표현이 "대리" 앞에 있으면,
+      // 그 마지막 경계 이후 구간만 의뢰인 지칭 구간으로 좁힌다.
+      // (예: "시공사가 ~를 상대로 ~를 구한 사안에서 지방공기업을 대리하여 승소"처럼
+      //  대리 앞부분에 상대방 업종(시공사)이 먼저 언급되는 문장 구조에서,
+      //  경계를 두지 않으면 상대방 업종까지 의뢰인 키워드로 잘못 매칭되는 문제가 있었다.)
+      const boundaryRegex = /(사건|사안|소송)에서/g;
+      let lastBoundaryEnd = -1;
+      let boundaryMatch;
+      while ((boundaryMatch = boundaryRegex.exec(clientSegment)) !== null) {
+        lastBoundaryEnd = boundaryMatch.index + boundaryMatch[0].length;
+      }
+      if (lastBoundaryEnd !== -1) {
+        clientSegment = clientSegment.slice(lastBoundaryEnd);
+      }
+      clientText = (clientSegment + ' ' + (c.sub || '')).toLowerCase();
+    }
 
     // 의뢰인 업종 키워드: 입력된 단어 중 하나 이상 포함 여부 확인 (동의어 포함)
     let industryMatch = 0;

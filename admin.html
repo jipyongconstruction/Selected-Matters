@@ -38,6 +38,7 @@ th { background: #eef4fa; color: #1a3a5c; text-align: left; }
 td.no-col { width: 46px; text-align: center; color: #888; }
 td.type-col { width: 90px; }
 td.cat-col { width: 200px; }
+td.client-col { width: 110px; }
 td.sub-col { width: 220px; }
 .perf-view { white-space: pre-wrap; word-break: break-word; line-height: 1.6; }
 .status { font-size: 13px; color: #c0392b; margin-left: auto; }
@@ -128,11 +129,11 @@ td.sub-col { width: 220px; }
         <b>엑셀 업로드 형식:</b> 첫 행은 머리글(<code>업무구분</code>, <code>분야</code>, <code>쟁점</code>, <code>실적내용</code>)로 두고, 그 아래에 데이터를
         입력한 .xlsx/.xls 파일을 사용하세요. 업무구분 값은 "소송"/"자문", 분야 값은 아래 9개 분야 명칭과 정확히 일치해야 목록에서
         올바르게 선택됩니다. <b>분야가 2개 이상</b>이면 한 칸에 <code>건설행정, 건설환경</code> 처럼 쉼표(,)나 슬래시(/)로
-        구분해서 적으면 표에서 해당 분야가 모두 함께 표시됩니다. <b>쟁점</b>은 선택 항목이며, 비어 있어도 됩니다.
-        <b>의뢰인유형</b> 열이 있으면 자동으로 인식되어 저장되지만(표에는 표시되지 않고, user.html의 의뢰인 업종 키워드 검색에만
-        사용됩니다), <b>수임번호</b> 등 그 외의 열은 완전히 무시되어 표에도 나타나지 않고 저장되지도 않습니다.
-        표에 나오는 업무구분·분야·쟁점·실적내용은 엑셀/JSON에 입력된 내용을 그대로 보여주는 화면이며, 표에서 직접 수정할 수는 없습니다.
-        수정이 필요하면 엑셀 파일을 고친 뒤 다시 불러와 주세요.
+        구분해서 적으면 표에서 해당 분야가 모두 함께 표시됩니다. <b>쟁점, 의뢰인유형</b>은 선택 항목이며, 비어 있어도 됩니다.
+        <b>수임번호</b> 등 위 5개 항목(업무구분·분야·의뢰인유형·쟁점·실적내용)에 해당하지 않는 다른 열은 자동으로 무시되어
+        표에 나타나지 않고 저장되지도 않습니다. 의뢰인유형은 user.html의 의뢰인 업종 키워드 검색에도 함께 사용됩니다.
+        표에 나오는 업무구분·분야·의뢰인유형·쟁점·실적내용은 엑셀/JSON에 입력된 내용을 그대로 보여주는 화면이며, 표에서 직접
+        수정할 수는 없습니다. 수정이 필요하면 엑셀 파일을 고친 뒤 다시 불러와 주세요.
       </div>
     </div>
   </div>
@@ -184,9 +185,10 @@ td.sub-col { width: 220px; }
     <thead>
       <tr>
         <th style="width:46px;">No</th>
-        <th style="width:90px;">업무구분</th>
-        <th style="width:200px;">분야</th>
-        <th style="width:220px;">쟁점</th>
+        <th style="width:80px;">업무구분</th>
+        <th style="width:110px;">의뢰인유형</th>
+        <th style="width:170px;">분야</th>
+        <th style="width:190px;">쟁점</th>
         <th>실적 내용</th>
       </tr>
     </thead>
@@ -494,6 +496,7 @@ function render() {
     <tr>
       <td class="no-col">${i + 1}</td>
       <td class="type-col">${typeDisplay(r.type)}</td>
+      <td class="client-col"><div class="perf-view">${escapeHtml(r.client || '')}</div></td>
       <td class="cat-col">${catDisplay(r.cat)}</td>
       <td class="sub-col"><div class="perf-view">${escapeHtml(r.sub || '')}</div></td>
       <td><div class="perf-view">${escapeHtml(r.perf)}</div></td>

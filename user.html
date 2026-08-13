@@ -361,15 +361,19 @@ function caseTypeLabel(c) {
 }
 
 // 의뢰인 업종 키워드 동의어 — 입력한 단어 하나에 대해 아래 단어들도 함께 매칭
-const INDUSTRY_SYNONYMS = {
-  '건설사': ['건설사', '건설회사', '건설업체'],
-  '신탁사': ['신탁사', '신탁회사'],
-  '시공사': ['시공사', '시공자', '시공업체', '시공단'],
-  '시행사': ['시행사', '시행자', '시행업체']
-};
+// 업종 키워드 동의어 그룹. 그룹 내 어떤 단어로 검색해도 같은 그룹의 다른 표현이 함께 매칭된다.
+// (예: '지자체'로 검색해도 '지방자치단체'가 포함된 실적이 함께 선별됨)
+const INDUSTRY_SYNONYM_GROUPS = [
+  ['건설사', '건설회사', '건설업체'],
+  ['신탁사', '신탁회사'],
+  ['시공사', '시공자', '시공업체', '시공단'],
+  ['시행사', '시행자', '시행업체'],
+  ['지자체', '지방자치단체']
+];
 
 function industryWordVariants(word) {
-  return INDUSTRY_SYNONYMS[word] || [word];
+  const group = INDUSTRY_SYNONYM_GROUPS.find(g => g.includes(word));
+  return group || [word];
 }
 
 function selectCases() {
@@ -446,9 +450,11 @@ function selectCases() {
     });
     score += industryMatch * 12;
 
-    // 사건 관련 키워드: 입력된 단어 중 하나 이상 포함 여부 확인
+    // 사건 관련 키워드: 입력된 단어 중 하나 이상 포함 여부 확인 (동의어 포함)
     let kwMatch = 0;
-    kwWords.forEach(w => { if (fullText.includes(w)) kwMatch++; });
+    kwWords.forEach(w => {
+      if (industryWordVariants(w).some(v => fullText.includes(v))) kwMatch++;
+    });
     score += kwMatch * 10;
 
     // AND 조건: 두 필드가 모두 입력된 경우, 양쪽 키워드가 모두 하나 이상 매칭되어야 함
